@@ -21,16 +21,28 @@ export const AuthProvider = ({ children }) => {
     checkAuth()
   }, [])
 
-  const checkAuth = async () => {
-    const token = localStorage.getItem('token')
-    const userData = localStorage.getItem('user')
-    
-    if (token && userData) {
-      setUser(JSON.parse(userData))
-      api.defaults.headers.common['Authorization'] = `Bearer ${token}`
-    }
-    setLoading(false)
+ const checkAuth = async () => {
+  const token = localStorage.getItem('token');
+  const userData = localStorage.getItem('user');
+
+  if (!token || !userData) {
+    setUser(null);
+    setLoading(false);
+    return;
   }
+
+  try {
+    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    setUser(JSON.parse(userData));
+  } catch (error) {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setUser(null);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const login = async (email, password) => {
     try {

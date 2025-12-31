@@ -26,24 +26,32 @@ const Dashboard = () => {
   })
 
   useEffect(() => {
-    fetchTasks()
-  }, [filters])
+  if (!user) return;   
+  fetchTasks();
+}, [filters, user]);
+
 
   const fetchTasks = async () => {
-    try {
-      const params = new URLSearchParams()
-      if (filters.search) params.append('search', filters.search)
-      if (filters.status) params.append('status', filters.status)
-      if (filters.priority) params.append('priority', filters.priority)
+  try {
+    const params = new URLSearchParams()
+    if (filters.search) params.append('search', filters.search)
+    if (filters.status) params.append('status', filters.status)
+    if (filters.priority) params.append('priority', filters.priority)
 
-      const { data } = await api.get(`/tasks?${params.toString()}`)
-      setTasks(data.tasks)
-    } catch (error) {
+    const { data } = await api.get(`/tasks?${params.toString()}`)
+    setTasks(Array.isArray(data.tasks) ? data.tasks : [])
+  } catch (error) {
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      console.warn('Not authenticated, skipping task fetch')
+    } else {
       console.error('Failed to fetch tasks:', error)
-    } finally {
-      setLoading(false)
     }
+    setTasks([])
+  } finally {
+    setLoading(false)
   }
+}
+
 
   const handleCreateTask = async (taskData) => {
     try {
